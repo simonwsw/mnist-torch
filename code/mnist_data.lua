@@ -6,12 +6,14 @@ mnist_data = {}
 mnist_data.train_dir = "data/train"
 mnist_data.test_dir = "data/test"
 mnist_data.image_size = 28
+mnist_data.channel = 1
+mnist_data.tensortype = DoubleTensor
 
 -- random shuffle items in the array, in our case the filenames of images
 local function shuffle (array)
-  local n, random, j = #array, math.random
+  local n, random = #array, math.random
   for i = 1, n do
-    j, k = random(n), random(n)
+    local j, k = random(n), random(n)
     array[j], array[k] = array[k], array[j]
   end
   return array
@@ -45,12 +47,14 @@ local function load_image (data_dir)
   local labels = {}
   for i, file in ipairs(files) do
     -- load each image
-    images[#images + 1] = image.load(file,
+    images[i] = image.load(file,
       mnist_data.channel, mnist_data.tensortype)
+
+    -- parse label
     local paths = split(file, "/")
     local file_name = paths[#paths]
     local class = split(split(file_name, "_")[2], ".")[1]
-    labels[#labels + 1] = tonumber(class)
+    labels[i] = tonumber(class)
   end
 
   print("Load " .. #images .. " images")
