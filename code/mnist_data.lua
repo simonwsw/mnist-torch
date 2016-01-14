@@ -22,7 +22,7 @@ local function split (str, sep)
   local sep, fields = sep or " ", {}
   local pattern = string.format("([^%s]+)", sep)
   str:gsub(pattern, function (c)
-    table.insert(fields, c)
+    fields[#fields + 1] = c
   end)
   return fields
 end
@@ -33,7 +33,7 @@ local function load_image (data_dir)
   for file in paths.files(data_dir) do
     -- only insert filename with jpg
     if file:find("jpg" .. "$") then
-      table.insert(files, paths.concat(data_dir, file))
+      files[#files + 1] = paths.concat(data_dir, file)
     end
   end
 
@@ -45,21 +45,39 @@ local function load_image (data_dir)
   local labels = {}
   for i, file in ipairs(files) do
     -- load each image
-    table.insert(images, image.load(file))
+    images[#images + 1] = image.load(file,
+      mnist_data.channel, mnist_data.tensortype)
     local paths = split(file, "/")
     local file_name = paths[#paths]
     local class = split(split(file_name, "_")[2], ".")[1]
-    table.insert(labels, tonumber(class))
+    labels[#labels + 1] = tonumber(class)
   end
 
   print("Load " .. #images .. " images")
   return images, labels
 end
 
-local function image2data (images)
+local function image2data (images, labels)
+  local data_set = {}
   local n = #images
-  local data = torch.Tensor(n, 1, mnist_data.image_size, mnist_data.image_size)
+  local tensor_data = torch.Tensor(n, mnist_data.channel,
+    mnist_data.image_size, mnist_data.image_size)
+  local tensor_labels = torch.Tensor(n)
 
+  -- load images and labels into tensor
+  for i = 1, n do
+    tensor_data[{i, 1}] = images[i]
+    tensor_labels[i] = labels[i]
+  end
+
+  data_set.data = tensor_data
+  data_set.labels = tensor_labels
+
+  return data_set
 end
 
-load_image(mnist_data.train_dir)
+function mnist_data.load (dir_type)
+  local images, labels = load_image(mnist_data[dir_type])
+  local data_set = image2data(images, labels)
+  return data_set
+end
