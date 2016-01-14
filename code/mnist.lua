@@ -42,7 +42,7 @@ function mnist:load_image (dir)
     local paths = split(file, "/") -- parse label
     local file_name = paths[#paths]
     local class = split(split(file_name, "_")[2], ".")[1]
-    labels[i] = tonumber(class)
+    labels[i] = tonumber(class) + 1 -- lua start from 1
   end
 
   self.n = #images
@@ -61,13 +61,15 @@ function mnist:image2data (images, labels)
     tensor_labels[i] = labels[i]
   end
 
-  self.dataset = {tensor_data, tensor_labels}
+  self.data = tensor_data
+  self.labels =  tensor_labels
 end
 
 -- load mnist data
 function mnist.load (dir)
   local self = setmetatable({}, mnist)
   torch.setdefaulttensortype('torch.FloatTensor')
+  self.classes = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 
   local images, labels = self:load_image(dir)
   self:image2data(images, labels)
